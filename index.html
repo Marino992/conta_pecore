@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -41,9 +40,9 @@
   }
   #restartButton:active { background:#3c9f42; }
 
-  .poop-click {
-    transform:scale(1.8) rotate(360deg);
-    color:red;
+  .poop-hide {
+    transform:scale(1.5) rotate(360deg);
+    opacity:0;
     transition:0.4s;
   }
 </style>
@@ -63,6 +62,7 @@
 let score, timeLeft, gameOver;
 let timer;
 let poopProbability;
+let poopTimeout = null;
 
 const sheepButton = document.getElementById("sheepButton");
 const scoreDisplay = document.getElementById("score");
@@ -75,17 +75,17 @@ function startGame(){
   timeLeft = 30;
   gameOver = false;
 
-  poopProbability = 0.05; // inizialmente molto bassa
+  poopProbability = 0.12; // cacca più frequente
 
   scoreDisplay.textContent = `🐑Pecore: ${score}`;
   timeDisplay.textContent = `⏱️ Tempo: ${timeLeft}`;
   message.textContent = "";
   restartButton.style.display = "none";
 
-  // mostra subito una pecora
-  sheepButton.textContent = "🐑";
-
   clearInterval(timer);
+  clearTimeout(poopTimeout);
+
+  sheepButton.textContent = "🐑";
 
   timer = setInterval(() => {
     if (gameOver) return;
@@ -93,8 +93,8 @@ function startGame(){
     timeLeft--;
     timeDisplay.textContent = `⏱️ Tempo: ${timeLeft}`;
 
-    // prob. aumenta lentamente
-    poopProbability = Math.min(0.25, poopProbability + 0.005);
+    // aumento più veloce della cacca
+    poopProbability = Math.min(0.40, poopProbability + 0.01);
 
     if (timeLeft <= 0) {
       endGame("Tempo finito!");
@@ -109,26 +109,50 @@ sheepButton.addEventListener("touchstart", tap);
 function tap(){
   if (gameOver) return;
 
+  clearTimeout(poopTimeout);
+
   const current = sheepButton.textContent;
 
   if (current === "💩") {
-    sheepButton.classList.add("poop-click");
     endGame("Hai toccato la cacca!");
     return;
   }
 
-  // era pecora → punto
+  // cliccata una pecora → punto
   score++;
   scoreDisplay.textContent = `🐑Pecore: ${score}`;
 
-  animateSheep(() => {
-    // dopo l'animazione, generiamo *il nuovo elemento*
-    const isPoop = Math.random() < poopProbability;
-    sheepButton.textContent = isPoop ? "💩" : "🐑";
+  animateSymbol(() => {
+    generateNextSymbol();
   });
 }
 
-function animateSheep(callback){
+function generateNextSymbol() {
+  const isPoop = Math.random() < poopProbability;
+
+  sheepButton.textContent = isPoop ? "💩" : "🐑";
+
+  // se esce la cacca, parte il timer perché sparisca da sola
+  if (isPoop) {
+    poopTimeout = setTimeout(() => {
+      autoRemovePoop();
+    }, 500); // mezzo secondo
+  }
+}
+
+function autoRemovePoop() {
+  if (gameOver) return;
+  if (sheepButton.textContent !== "💩") return;
+
+  sheepButton.classList.add("poop-hide");
+
+  setTimeout(() => {
+    sheepButton.classList.remove("poop-hide");
+    generateNextSymbol(); // appare il prossimo simbolo
+  }, 400);
+}
+
+function animateSymbol(callback){
   sheepButton.style.transform = "scale(0)";
   sheepButton.style.opacity = "0";
 
@@ -142,6 +166,7 @@ function animateSheep(callback){
 function endGame(msg){
   gameOver = true;
   clearInterval(timer);
+  clearTimeout(poopTimeout);
   message.textContent = `${msg} | Punteggio: ${score}`;
   restartButton.style.display = "block";
 }
@@ -153,4 +178,6 @@ startGame();
 
 </body>
 </html>
+
+
 
