@@ -25,6 +25,7 @@
     transition:all 0.25s ease;
     margin:20px 0;
     user-select:none;
+    -webkit-tap-highlight-color: transparent;
   }
   #message { font-size:5vw; min-height:2em; margin-top:10px; }
   #restartButton {
@@ -54,7 +55,7 @@
 
 <div id="score">🐑Pecore: 0</div>
 <div id="time">⏱️ Tempo: 30</div>
-<div id="sheepButton">🐑</div>
+<div id="sheepButton" role="button" tabindex="0" aria-label="Pecora">🐑</div>
 <div id="message"></div>
 <button id="restartButton">Lavati le mani e Ricomincia</button>
 
@@ -63,6 +64,7 @@ let score, timeLeft, gameOver;
 let timer;
 let poopProbability;
 let poopTimeout = null;
+let handling = false; // protezione per evitare doppio conteggio
 
 const sheepButton = document.getElementById("sheepButton");
 const scoreDisplay = document.getElementById("score");
@@ -74,6 +76,7 @@ function startGame(){
   score = 0;
   timeLeft = 30;
   gameOver = false;
+  handling = false;
 
   poopProbability = 0.12; // cacca più frequente
 
@@ -103,17 +106,28 @@ function startGame(){
   }, 1000);
 }
 
-sheepButton.addEventListener("click", tap);
-sheepButton.addEventListener("touchstart", tap);
+// Usa pointerdown (unico listener per mouse/touch/stylus) → nessun doppio evento
+sheepButton.addEventListener("pointerdown", onPointerDown);
 
-function tap(){
+// accessibilità via tastiera (barra/enter)
+sheepButton.addEventListener("keydown", (ev) => {
+  if (ev.key === "Enter" || ev.key === " ") {
+    ev.preventDefault();
+    onPointerDown();
+  }
+});
+
+function onPointerDown(){
   if (gameOver) return;
+  if (handling) return; // protezione extra
+  handling = true;
 
   clearTimeout(poopTimeout);
 
   const current = sheepButton.textContent;
 
   if (current === "💩") {
+    // se l'utente tocca la cacca → game over immediato
     endGame("Hai toccato la cacca!");
     return;
   }
@@ -122,8 +136,12 @@ function tap(){
   score++;
   scoreDisplay.textContent = `🐑Pecore: ${score}`;
 
+  // animiamo e poi generiamo il prossimo simbolo; durante l'animazione `handling` è true
   animateSymbol(() => {
     generateNextSymbol();
+    // piccoli ritardi possibili per evitare race; resettiamo handling qui così il prossimo tap è accettato
+    // se appare subito una pecora, l'utente potrà toccarla; se appare cacca, l'auto-remove si occuperà
+    setTimeout(() => { handling = false; }, 50);
   });
 }
 
@@ -134,9 +152,11 @@ function generateNextSymbol() {
 
   // se esce la cacca, parte il timer perché sparisca da sola
   if (isPoop) {
+    // assicurati di cancellare eventuali timeout precedenti
+    clearTimeout(poopTimeout);
     poopTimeout = setTimeout(() => {
       autoRemovePoop();
-    }, 500); // mezzo secondo
+    }, 500); // mezzo secondo prima che la cacca vada via automaticamente
   }
 }
 
@@ -144,6 +164,7 @@ function autoRemovePoop() {
   if (gameOver) return;
   if (sheepButton.textContent !== "💩") return;
 
+  // animazione di scomparsa
   sheepButton.classList.add("poop-hide");
 
   setTimeout(() => {
@@ -153,6 +174,7 @@ function autoRemovePoop() {
 }
 
 function animateSymbol(callback){
+  // animazione di scala per dare feedback al tocco
   sheepButton.style.transform = "scale(0)";
   sheepButton.style.opacity = "0";
 
@@ -169,6 +191,7 @@ function endGame(msg){
   clearTimeout(poopTimeout);
   message.textContent = `${msg} | Punteggio: ${score}`;
   restartButton.style.display = "block";
+  handling = false;
 }
 
 restartButton.addEventListener("click", startGame);
@@ -178,6 +201,8 @@ startGame();
 
 </body>
 </html>
+
+
 
 
 
