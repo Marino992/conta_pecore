@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Conta le Pecore</title>
+
+<!-- Favicon con emoji pecora -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐑</text></svg>">
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #a0e9fd, #ffffff);
+      text-align: center;
+      padding: 20px;
+  }
+
+  h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      color: #333;
+  }
+
+  #instructions {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      color: #555;
+      max-width: 600px;
+  }
+
+  #score, #time {
+      font-size: 1.5rem;
+      margin: 10px;
+      color: #444;
+  }
+
+  #sheepButton {
+      font-size: 12vw;
+      max-font-size: 150px;
+      cursor: pointer;
+      display: inline-block;
+      transition: all 0.3s ease;
+      margin: 20px 0;
+  }
+
+  #message {
+      font-size: 1.3rem;
+      margin-top: 15px;
+      color: #222;
+  }
+
+  #restartButton {
+      display: none;
+      margin-top: 20px;
+      padding: 10px 25px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      border: none;
+      border-radius: 12px;
+      background: #4CAF50;
+      color: white;
+      transition: background 0.3s;
+  }
+
+  #restartButton:hover {
+      background: #45a049;
+  }
+
+  @media (max-width: 600px) {
+      h1 { font-size: 2rem; }
+      #instructions { font-size: 1rem; }
+      #score, #time { font-size: 1.2rem; }
+      #sheepButton { font-size: 20vw; }
+      #restartButton { font-size: 1rem; padding: 8px 18px; }
+  }
+
+  /* Animazione cacca quando cliccata */
+  .poop-click {
+      transform: scale(2) rotate(360deg);
+      opacity: 1;
+      color: red;
+      transition: transform 0.5s, color 0.5s;
+  }
+</style>
+</head>
+<body>
+
+<h1>Conta le Pecore 🐑</h1>
+
+<!-- Spiegazione del gioco -->
+<p id="instructions">
+  Premi sulle pecore per aumentare il punteggio, ma fai attenzione: ogni tanto le pecore fanno 💩! 
+  Non toccare la cacca, altrimenti il tuo punteggio finirà nel fango😂!  Quante pecore riuscirai a prendere in 30 secondi?
+</p>
+
+<div id="score">🐑Pecore contate: 0</div>
+<div id="time">Tempo: 30</div>
+<div id="sheepButton">🐑</div>
+<div id="message"></div>
+<button id="restartButton">Lavati le mani e ricomincia😏</button>
+
+
+<script>
+let score, timeLeft, gameOver;
+let timer, sheepInterval, sheepSpeed, poopProbability, poopTimeout;
+let isPoopDisplayed = false; // Flag per garantire che la cacca resti visibile
+
+const sheepButton = document.getElementById('sheepButton');
+const scoreDisplay = document.getElementById('score');
+const timeDisplay = document.getElementById('time');
+const message = document.getElementById('message');
+const restartButton = document.getElementById('restartButton');
+
+function startGame() {
+    score = 0;
+    timeLeft = 30;
+    gameOver = false;
+    sheepSpeed = 1500;
+    poopProbability = 0.1;
+    isPoopDisplayed = false;
+
+    scoreDisplay.textContent = `🐑Pecore contate: ${score}`;
+    timeDisplay.textContent = `⏱️Tempo: ${timeLeft}`;
+    message.textContent = "";
+    sheepButton.style.cursor = "pointer";
+    sheepButton.textContent = "🐑";
+    sheepButton.style.opacity = "1";
+    sheepButton.classList.remove("poop-click");
+    restartButton.style.display = "none";
+
+    clearInterval(timer);
+    clearInterval(sheepInterval);
+    clearTimeout(poopTimeout);
+
+    timer = setInterval(() => {
+        if(gameOver) return;
+        timeLeft--;
+        timeDisplay.textContent = `Tempo: ${timeLeft}`;
+
+        if(timeLeft % 5 === 0 && sheepSpeed > 500){
+            sheepSpeed -= 100;
+            clearInterval(sheepInterval);
+            sheepInterval = setInterval(nextSheep, sheepSpeed);
+        }
+
+        poopProbability = Math.min(0.3, 0.1 + (30 - timeLeft)/100);
+
+        if(timeLeft <= 0){
+            endGame("Tempo scaduto!");
+        }
+    }, 1000);
+
+    sheepInterval = setInterval(nextSheep, sheepSpeed);
+}
+
+// Gestione click sulla pecora o cacca
+sheepButton.addEventListener('click', () => {
+    if(gameOver) return;
+    const current = sheepButton.textContent;
+
+    if(current === "💩") {
+        // Animazione cacca: ingrandisce
+        sheepButton.classList.add("poop-click");
+        clearTimeout(poopTimeout); // Blocca il ritorno automatico della pecora
+        endGame("Hai pestato la cacca, che schifo💩🙈🙉🙊!");
+    } else {
+        score++;
+        scoreDisplay.textContent = `🐑Pecore contate: ${score}`;
+        showNextSheep();
+    }
+});
+
+function nextSheep() {
+    if(gameOver) return;
+
+    const isPoop = Math.random() < poopProbability;
+    sheepButton.textContent = isPoop ? "💩" : "🐑";
+
+    if(isPoop) {
+        isPoopDisplayed = true;
+        clearTimeout(poopTimeout);
+        poopTimeout = setTimeout(() => {
+            if(sheepButton.textContent === "💩" && !gameOver){
+                isPoopDisplayed = false;
+                showNextSheep(); // Mostra la pecora con animazione
+            }
+        }, 1000); // La cacca resta almeno 1 secondo
+    } else {
+        isPoopDisplayed = false;
+    }
+}
+
+function showNextSheep() {
+    // Animazione: scompare + ricompare
+    sheepButton.style.transform = "scale(0) rotate(-360deg)";
+    sheepButton.style.opacity = "0";
+
+    setTimeout(() => {
+        sheepButton.style.transform = "scale(1) rotate(0deg)";
+        sheepButton.style.opacity = "1";
+
+        const isPoop = Math.random() < poopProbability;
+        sheepButton.textContent = isPoop ? "💩" : "🐑";
+
+        if(isPoop) {
+            isPoopDisplayed = true;
+            clearTimeout(poopTimeout);
+            poopTimeout = setTimeout(() => {
+                if(sheepButton.textContent === "💩" && !gameOver){
+                    isPoopDisplayed = false;
+                    showNextSheep();
+                }
+            }, 1000);
+        } else {
+            isPoopDisplayed = false;
+        }
+    }, 300);
+}
+
+function endGame(msg){
+    gameOver = true;
+    clearInterval(timer);
+    clearInterval(sheepInterval);
+    clearTimeout(poopTimeout);
+    message.textContent = `${msg} 🫣Il tuo punteggio finale: ${score}`;
+    sheepButton.style.cursor = "default";
+    restartButton.style.display = "inline-block";
+}
+
+restartButton.addEventListener('click', () => {
+    startGame();
+});
+
+startGame();
+</script>
+
+</body>
+</html>
