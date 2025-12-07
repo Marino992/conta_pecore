@@ -87,8 +87,9 @@ function startGame(){
   score = 0;
   timeLeft = 30;
   gameOver = false;
-  sheepSpeed = 1300; // più veloce per smartphone
-  poopProbability = 0.12;
+
+  sheepSpeed = 1300;
+  poopProbability = 0.05; // più bassa per non frustrare l'utente
 
   scoreDisplay.textContent = `🐑Pecore: ${score}`;
   timeDisplay.textContent = `⏱️ Tempo: ${timeLeft}`;
@@ -106,15 +107,15 @@ function startGame(){
     timeLeft--;
     timeDisplay.textContent = `⏱️ Tempo: ${timeLeft}`;
 
-    // velocità aumenta gradualmente
+    // velocità aumenta gradualmente ma non troppo
     if(timeLeft % 5 === 0 && sheepSpeed > 450){
       sheepSpeed -= 100;
       clearInterval(sheepInterval);
       sheepInterval = setInterval(nextSheep, sheepSpeed);
     }
 
-    // più probabilità di cacca col passare del tempo
-    poopProbability = Math.min(0.33, poopProbability + 0.01);
+    // aumento più dolce della probabilità della cacca
+    poopProbability = Math.min(0.25, poopProbability + 0.005);
 
     if(timeLeft <= 0) endGame("Tempo finito!");
   }, 1000);
@@ -134,7 +135,7 @@ function tap(){
   } else {
     score++;
     scoreDisplay.textContent = `🐑Pecore: ${score}`;
-    animateSheep();
+    animateSheep();  // ora NON genera più cacca random
   }
 }
 
@@ -159,16 +160,7 @@ function animateSheep(){
   setTimeout(() => {
     sheepButton.style.transform = "scale(1)";
     sheepButton.style.opacity = "1";
-
-    const isPoop = Math.random() < poopProbability;
-    sheepButton.textContent = isPoop ? "💩" : "🐑";
-
-    if(isPoop){
-      clearTimeout(poopTimeout);
-      poopTimeout = setTimeout(() => {
-        if(sheepButton.textContent === "💩" && !gameOver) animateSheep();
-      }, 700);
-    }
+    // NON cambiamo l’emoji qui!
   }, 200);
 }
 
@@ -177,6 +169,7 @@ function endGame(msg){
   clearInterval(timer);
   clearInterval(sheepInterval);
   clearTimeout(poopTimeout);
+
   message.textContent = `${msg} | Punteggio: ${score}`;
   restartButton.style.display = "block";
 }
@@ -188,6 +181,8 @@ startGame();
 
 </body>
 </html>
+
+
 
 
 
