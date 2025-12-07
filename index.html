@@ -14,7 +14,7 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
       min-height: 100vh;
       background: linear-gradient(135deg, #a0e9fd, #ffffff);
@@ -37,7 +37,7 @@
 
   #score, #time {
       font-size: 1.5rem;
-      margin: 10px;
+      margin: 8px 0;
       color: #444;
   }
 
@@ -48,18 +48,20 @@
       display: inline-block;
       transition: all 0.3s ease;
       margin: 20px 0;
+      user-select: none;
   }
 
   #message {
       font-size: 1.3rem;
       margin-top: 15px;
       color: #222;
+      min-height: 1.5em;
   }
 
   #restartButton {
       display: none;
       margin-top: 20px;
-      padding: 10px 25px;
+      padding: 12px 28px;
       font-size: 1.2rem;
       cursor: pointer;
       border: none;
@@ -73,20 +75,32 @@
       background: #45a049;
   }
 
-  @media (max-width: 600px) {
-      h1 { font-size: 2rem; }
-      #instructions { font-size: 1rem; }
-      #score, #time { font-size: 1.2rem; }
-      #sheepButton { font-size: 20vw; }
-      #restartButton { font-size: 1rem; padding: 8px 18px; }
-  }
-
   /* Animazione cacca quando cliccata */
   .poop-click {
       transform: scale(2) rotate(360deg);
       opacity: 1;
       color: red;
       transition: transform 0.5s, color 0.5s;
+  }
+
+  /* Responsive per smartphone */
+  @media (max-width: 600px) {
+      body {
+          padding: 15px;
+      }
+      h1 { font-size: 2rem; }
+      #instructions { font-size: 1rem; margin-bottom: 15px; }
+      #score, #time { font-size: 1.2rem; }
+      #sheepButton { font-size: 20vw; }
+      #restartButton { font-size: 1rem; padding: 10px 20px; }
+  }
+
+  @media (max-width: 400px) {
+      #sheepButton { font-size: 25vw; }
+      h1 { font-size: 1.6rem; }
+      #instructions { font-size: 0.9rem; }
+      #score, #time { font-size: 1rem; }
+      #restartButton { font-size: 0.9rem; padding: 8px 16px; }
   }
 </style>
 </head>
@@ -101,16 +115,15 @@
 </p>
 
 <div id="score">🐑Pecore contate: 0</div>
-<div id="time">Tempo: 30</div>
+<div id="time">⏱️Tempo: 30</div>
 <div id="sheepButton">🐑</div>
 <div id="message"></div>
 <button id="restartButton">Lavati le mani e ricomincia😏</button>
 
-
 <script>
 let score, timeLeft, gameOver;
 let timer, sheepInterval, sheepSpeed, poopProbability, poopTimeout;
-let isPoopDisplayed = false; // Flag per garantire che la cacca resti visibile
+let isPoopDisplayed = false; 
 
 const sheepButton = document.getElementById('sheepButton');
 const scoreDisplay = document.getElementById('score');
@@ -142,7 +155,7 @@ function startGame() {
     timer = setInterval(() => {
         if(gameOver) return;
         timeLeft--;
-        timeDisplay.textContent = `Tempo: ${timeLeft}`;
+        timeDisplay.textContent = `⏱️Tempo: ${timeLeft}`;
 
         if(timeLeft % 5 === 0 && sheepSpeed > 500){
             sheepSpeed -= 100;
@@ -160,15 +173,13 @@ function startGame() {
     sheepInterval = setInterval(nextSheep, sheepSpeed);
 }
 
-// Gestione click sulla pecora o cacca
 sheepButton.addEventListener('click', () => {
     if(gameOver) return;
     const current = sheepButton.textContent;
 
     if(current === "💩") {
-        // Animazione cacca: ingrandisce
         sheepButton.classList.add("poop-click");
-        clearTimeout(poopTimeout); // Blocca il ritorno automatico della pecora
+        clearTimeout(poopTimeout);
         endGame("Hai pestato la cacca, che schifo💩🙈🙉🙊!");
     } else {
         score++;
@@ -189,16 +200,15 @@ function nextSheep() {
         poopTimeout = setTimeout(() => {
             if(sheepButton.textContent === "💩" && !gameOver){
                 isPoopDisplayed = false;
-                showNextSheep(); // Mostra la pecora con animazione
+                showNextSheep(); 
             }
-        }, 1000); // La cacca resta almeno 1 secondo
+        }, 1000);
     } else {
         isPoopDisplayed = false;
     }
 }
 
 function showNextSheep() {
-    // Animazione: scompare + ricompare
     sheepButton.style.transform = "scale(0) rotate(-360deg)";
     sheepButton.style.opacity = "0";
 
@@ -243,3 +253,5 @@ startGame();
 
 </body>
 </html>
+
+
